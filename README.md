@@ -73,12 +73,13 @@ Siguiendo el estándar de seguridad establecido en **P3-05**, las credenciales d
 
 ---
 
-## 📊 5. Guía de Consultas PromQL
+## 📊 5. Guías de Telemetría y Consultas
 
-Para la operación del clúster y la definición de Service Level Objectives (SLOs), consulta la guía con **10 consultas PromQL de producción**:
-* 📄 [**`docs/promql.md` — 10 Consultas PromQL Esenciales (USE, RED y Burn Rate)**](docs/promql.md).
+* 📄 [**`docs/promql.md` — 10 Consultas PromQL Esenciales (USE, RED y Burn Rate)**](docs/promql.md)
+* 📄 [**`docs/logql.md` — Consultas de Logs con LogQL para Microservicios**](docs/logql.md)
 
 ---
+
 
 ## 🛠️ 6. Validación Local y Automatización
 
