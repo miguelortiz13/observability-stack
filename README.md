@@ -60,8 +60,8 @@ flowchart TD
 |---|---|---|
 | **`kube-prometheus-stack`** | Prometheus Operator, Prometheus TSDB, Alertmanager, Node Exporter, Kube-State-Metrics y Grafana. | Helm chart `prometheus-community/kube-prometheus-stack` v92.1.1 gestionado vía Argo CD. |
 | **`Grafana`** | Tableros unificados con soporte de provisioning declarativo para dashboards (métodos RED y USE) y datasources. | Integrado con **External Secrets Operator** para autenticación `admin` desde Azure Key Vault. |
-| **`Loki` & `Alloy`** | Ingesta y consulta de logs estructurados con retención eficiente sin indexación pesada de texto completo. | Single-binary / filesystem en dev (P4-02). |
-| **`Tempo` & `OTel Collector`** | Almacenamiento de trazas distribuidas e ingesta unificada de instrumentación OTLP. | Integrado con spans de checkoutservice y frontend (P4-03). |
+| **`Loki` & `Alloy`** | Ingesta y consulta de logs estructurados con retención eficiente sin indexación pesada de texto completo. | Single-binary / filesystem en dev con Grafana Alloy DaemonSet (P4-02). |
+| **`Tempo` & `OTel Collector`** | Almacenamiento de trazas distribuidas e ingesta unificada de instrumentación OTLP (gRPC/HTTP). | Tempo Single-binary y OTel Collector Gateway con spans correlacionados (P4-03). |
 
 ---
 
@@ -77,6 +77,7 @@ Siguiendo el estándar de seguridad establecido en **P3-05**, las credenciales d
 
 * 📄 [**`docs/promql.md` — 10 Consultas PromQL Esenciales (USE, RED y Burn Rate)**](docs/promql.md)
 * 📄 [**`docs/logql.md` — Consultas de Logs con LogQL para Microservicios**](docs/logql.md)
+* 📄 [**`docs/tracing.md` — Guía de Trazabilidad Distribuida: OpenTelemetry, Tempo & TraceQL**](docs/tracing.md)
 
 ---
 
