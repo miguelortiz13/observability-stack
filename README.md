@@ -78,6 +78,7 @@ Siguiendo el estándar de seguridad establecido en **P3-05**, las credenciales d
 * 📄 [**`docs/promql.md` — 10 Consultas PromQL Esenciales (USE, RED y Burn Rate)**](docs/promql.md)
 * 📄 [**`docs/logql.md` — Consultas de Logs con LogQL para Microservicios**](docs/logql.md)
 * 📄 [**`docs/tracing.md` — Guía de Trazabilidad Distribuida: OpenTelemetry, Tempo & TraceQL**](docs/tracing.md)
+* 📄 [**`docs/dashboards.md` — Dashboards como Código: Métodos RED y USE en Grafana**](docs/dashboards.md)
 
 ---
 
