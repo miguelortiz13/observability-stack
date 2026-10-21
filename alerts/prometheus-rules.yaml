@@ -1,0 +1,117 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: online-boutique-sre-alerts
+  namespace: monitoring
+  labels:
+    release: kube-prometheus-stack
+    app.kubernetes.io/part-of: observability-stack
+spec:
+  groups:
+    - name: online-boutique.symptoms
+      interval: 30s
+      rules:
+        - alert: FrontendHighErrorRate
+          expr: |
+            (
+              sum(rate(http_requests_total{namespace="online-boutique", job=~"frontend.*", status=~"5.."}[5m]))
+              /
+              sum(rate(http_requests_total{namespace="online-boutique", job=~"frontend.*"}[5m]))
+            ) * 100 > 5
+          for: 2m
+          labels:
+            severity: critical
+            alert_type: symptom
+            service: frontend
+            namespace: online-boutique
+          annotations:
+            summary: "Alta tasa de errores HTTP 5xx en el Frontend ({{ $value | printf \"%.2f\" }}%)"
+            description: "El servicio frontend en el namespace online-boutique presenta una tasa de errores 5xx superior al 5% durante los últimos 2 minutos."
+            runbook_url: "https://github.com/miguelortiz13/observability-stack/blob/main/docs/alerting-runbooks.md#frontendhigherrorrate"
+
+        - alert: FrontendHighLatencyP95
+          expr: |
+            histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket{namespace="online-boutique", job=~"frontend.*"}[5m])) by (le)) > 0.5
+          for: 5m
+          labels:
+            severity: warning
+            alert_type: symptom
+            service: frontend
+            namespace: online-boutique
+          annotations:
+            summary: "Latencia p95 elevada en el Frontend ({{ $value | printf \"%.3f\" }}s)"
+            description: "El percentil 95 de latencia en el servicio frontend supera los 500ms de forma sostenida durante 5 minutos."
+            runbook_url: "https://github.com/miguelortiz13/observability-stack/blob/main/docs/alerting-runbooks.md#frontendhighlatencyp95"
+
+        - alert: OnlineBoutiqueServiceUnavailable
+          expr: |
+            kube_deployment_status_replicas_available{namespace="online-boutique"} == 0
+          for: 1m
+          labels:
+            severity: critical
+            alert_type: symptom
+            namespace: online-boutique
+          annotations:
+            summary: "Servicio {{ $labels.deployment }} sin réplicas disponibles en online-boutique"
+            description: "El Deployment {{ $labels.deployment }} en el namespace {{ $labels.namespace }} tiene 0 réplicas disponibles durante más de 1 minuto, degradando las operaciones de negocio."
+            runbook_url: "https://github.com/miguelortiz13/observability-stack/blob/main/docs/alerting-runbooks.md#onlineboutiqueserviceunavailable"
+
+    - name: kubernetes.pods.causes
+      interval: 30s
+      rules:
+        - alert: PodCrashLooping
+          expr: |
+            rate(kube_pod_container_status_restarts_total{namespace="online-boutique"}[15m]) * 60 * 5 > 0
+            or
+            kube_pod_container_status_waiting_reason{namespace="online-boutique", reason="CrashLoopBackOff"} > 0
+          for: 2m
+          labels:
+            severity: critical
+            alert_type: cause
+            namespace: online-boutique
+          annotations:
+            summary: "Pod {{ $labels.pod }} ({{ $labels.container }}) en CrashLoopBackOff"
+            description: "El contenedor {{ $labels.container }} del pod {{ $labels.pod }} en {{ $labels.namespace }} se está reiniciando continuamente o permanece en CrashLoopBackOff."
+            runbook_url: "https://github.com/miguelortiz13/observability-stack/blob/main/docs/alerting-runbooks.md#podcrashlooping"
+
+        - alert: PodNotReady
+          expr: |
+            sum by (namespace, pod) (kube_pod_status_phase{namespace="online-boutique", phase=~"Pending|Unknown|Failed"}) > 0
+          for: 5m
+          labels:
+            severity: warning
+            alert_type: cause
+            namespace: online-boutique
+          annotations:
+            summary: "Pod {{ $labels.pod }} no se encuentra listo en {{ $labels.namespace }}"
+            description: "El pod {{ $labels.pod }} lleva más de 5 minutos en estado no operativo (Pending, Unknown o Failed)."
+            runbook_url: "https://github.com/miguelortiz13/observability-stack/blob/main/docs/alerting-runbooks.md#podnotready"
+
+    - name: kubernetes.nodes.causes
+      interval: 30s
+      rules:
+        - alert: NodeMemoryPressure
+          expr: |
+            (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100 > 85
+            or
+            kube_node_status_condition{condition="MemoryPressure", status="true"} == 1
+          for: 5m
+          labels:
+            severity: warning
+            alert_type: cause
+          annotations:
+            summary: "Presión de memoria elevada en nodo {{ $labels.instance }}{{ $labels.node }}"
+            description: "El uso de memoria disponible en el nodo supera el 85% o el Kubelet ha reportado condición MemoryPressure=true durante más de 5 minutos."
+            runbook_url: "https://github.com/miguelortiz13/observability-stack/blob/main/docs/alerting-runbooks.md#nodememorypressure"
+
+        - alert: NodeHighCPUUtilization
+          expr: |
+            100 - (avg by (instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 85
+          for: 5m
+          labels:
+            severity: warning
+            alert_type: cause
+          annotations:
+            summary: "Uso elevado de CPU en nodo {{ $labels.instance }} ({{ $value | printf \"%.1f\" }}%)"
+            description: "El nodo {{ $labels.instance }} presenta una utilización sostenida de CPU superior al 85% durante los últimos 5 minutos."
+            runbook_url: "https://github.com/miguelortiz13/observability-stack/blob/main/docs/alerting-runbooks.md#nodehighcpuutilization"

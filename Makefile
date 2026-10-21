@@ -42,7 +42,7 @@ lint-otel:
 	@echo "✅ OpenTelemetry Collector template is valid"
 
 .PHONY: validate
-validate: validate-prometheus validate-loki validate-alloy validate-tempo validate-otel ## Valida manifiestos generados contra esquemas OpenAPI con Kubeconform
+validate: validate-prometheus validate-loki validate-alloy validate-tempo validate-otel validate-alerts ## Valida manifiestos generados contra esquemas OpenAPI con Kubeconform
 
 .PHONY: validate-prometheus
 validate-prometheus:
@@ -78,3 +78,9 @@ validate-otel:
 	@helm template opentelemetry-collector open-telemetry/opentelemetry-collector -f helm/opentelemetry-collector/values.yaml \
 		| kubeconform -summary -schema-location default -schema-location '$(SCHEMA_URL)' -ignore-missing-schemas
 	@echo "✅ OpenTelemetry Collector conforms to Kubernetes schemas"
+
+.PHONY: validate-alerts
+validate-alerts:
+	@echo "==> Validating Alerting CRDs (PrometheusRule & AlertmanagerConfig) with Kubeconform..."
+	@kubeconform -strict -summary -schema-location default -schema-location '$(SCHEMA_URL)' alerts/*.yaml
+	@echo "✅ Alerting CRDs conform to Kubernetes schemas"
