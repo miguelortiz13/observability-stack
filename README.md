@@ -62,13 +62,15 @@ flowchart TD
 | **`Grafana`** | Tableros unificados con soporte de provisioning declarativo para dashboards (métodos RED y USE) y datasources. | Integrado con **External Secrets Operator** para autenticación `admin` desde Azure Key Vault. |
 | **`Loki` & `Alloy`** | Ingesta y consulta de logs estructurados con retención eficiente sin indexación pesada de texto completo. | Single-binary / filesystem en dev con Grafana Alloy DaemonSet (P4-02). |
 | **`Tempo` & `OTel Collector`** | Almacenamiento de trazas distribuidas e ingesta unificada de instrumentación OTLP (gRPC/HTTP). | Tempo Single-binary y OTel Collector Gateway con spans correlacionados (P4-03). |
+| **`Alertmanager` & `PrometheusRule`** | Reglas de alerta SRE (síntomas vs. causas) con `runbook_url` y enrutamiento a Discord. | `PrometheusRule` y `AlertmanagerConfig` integrados con External Secrets (P4-05). |
 
 ---
 
 ## 🔐 4. Seguridad y Gestión de Secretos (Integración P3-05)
 
-Siguiendo el estándar de seguridad establecido en **P3-05**, las credenciales de administración de Grafana no se almacenan en texto plano en Git ni en valores estáticos:
+Siguiendo el estándar de seguridad establecido en **P3-05**, las credenciales de administración de Grafana y los Webhooks de notificación no se almacenan en texto plano en Git ni en valores estáticos:
 * El secreto `grafana-admin-credentials` se sincroniza dinámicamente desde **Azure Key Vault** (`grafana-admin-user`, `grafana-admin-password`) mediante el `ClusterSecretStore` `azure-keyvault` con **Azure Workload Identity**.
+* El secreto `alertmanager-discord-webhook` se sincroniza desde **Azure Key Vault** (`discord-webhook-url`) y es consumido directamente por `AlertmanagerConfig` mediante `apiURL`.
 * El chart de Grafana consume directamente el secreto mediante `grafana.admin.existingSecret: grafana-admin-credentials`.
 
 ---
@@ -79,6 +81,7 @@ Siguiendo el estándar de seguridad establecido en **P3-05**, las credenciales d
 * 📄 [**`docs/logql.md` — Consultas de Logs con LogQL para Microservicios**](docs/logql.md)
 * 📄 [**`docs/tracing.md` — Guía de Trazabilidad Distribuida: OpenTelemetry, Tempo & TraceQL**](docs/tracing.md)
 * 📄 [**`docs/dashboards.md` — Dashboards como Código: Métodos RED y USE en Grafana**](docs/dashboards.md)
+* 📄 [**`docs/alerting-runbooks.md` — Alertas Accionables a Discord y Catálogo de Runbooks SRE**](docs/alerting-runbooks.md)
 
 ---
 

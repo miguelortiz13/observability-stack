@@ -1,0 +1,61 @@
+apiVersion: monitoring.coreos.com/v1alpha1
+kind: AlertmanagerConfig
+metadata:
+  name: discord-sre-routing
+  namespace: monitoring
+  labels:
+    release: kube-prometheus-stack
+    app.kubernetes.io/part-of: observability-stack
+spec:
+  route:
+    receiver: discord-sre
+    groupBy:
+      - alertname
+      - namespace
+      - severity
+    groupWait: 30s
+    groupInterval: 5m
+    repeatInterval: 4h
+    routes:
+      - receiver: discord-sre
+        matchers:
+          - name: severity
+            matchType: "="
+            value: critical
+        groupWait: 10s
+        repeatInterval: 1h
+      - receiver: discord-sre
+        matchers:
+          - name: severity
+            matchType: "="
+            value: warning
+        groupWait: 30s
+        repeatInterval: 4h
+  inhibitRules:
+    - sourceMatch:
+        - name: severity
+          matchType: "="
+          value: critical
+      targetMatch:
+        - name: severity
+          matchType: "="
+          value: warning
+      equal:
+        - alertname
+        - namespace
+  receivers:
+    - name: discord-sre
+      discordConfigs:
+        - apiURL:
+            name: alertmanager-discord-webhook
+            key: webhook-url
+          sendResolved: true
+          username: "Alertmanager SRE Bot"
+          title: '{{ if eq .Status "firing" }}🚨 [FIRING:{{ .Alerts.Firing | len }}]{{ else }}✅ [RESOLVED]{{ end }} {{ .CommonLabels.alertname }}'
+          message: |-
+            **Severidad:** `{{ .CommonLabels.severity }}` | **Tipo:** `{{ .CommonLabels.alert_type }}`
+            {{ range .Alerts }}
+            • **Resumen:** {{ .Annotations.summary }}
+            • **Detalle:** {{ .Annotations.description }}
+            • **Runbook:** {{ .Annotations.runbook_url }}
+            {{ end }}
