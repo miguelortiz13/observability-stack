@@ -6,7 +6,7 @@
 [![OpenTelemetry](https://img.shields.io/badge/Telemetry-OpenTelemetry-blue?logo=opentelemetry)](https://opentelemetry.io/)
 [![Kubeconform](https://img.shields.io/badge/Schema-Kubeconform%20Strict-brightgreen?logo=kubernetes)](https://github.com/yannh/kubeconform)
 
-Repositorio del **Proyecto 4 (`observability-stack`)** del **Laboratorio Integral de DevOps & SRE**. Implementa los **tres pilares de la observabilidad** (métricas, logs y trazas distribuidas) para el sistema de microservicios **Google Online Boutique**, correlacionados en **Grafana**, con dashboards y alertas declarativas como código.
+Repositiorio del **Proyecto 4 (`observability-stack`)** del **Laboratorio Integral de DevOps & SRE**. Implementa los **tres pilares de la observabilidad** (métricas, logs y trazas distribuidas) para el sistema de microservicios **Google Online Boutique**, correlacionados de forma nativa en **Grafana**, con tableros, alertas declarativas y análisis de canary automatizados como código.
 
 ---
 
@@ -26,8 +26,8 @@ En una arquitectura de microservicios distribuida:
 ```mermaid
 flowchart TD
     subgraph APPS["Microservicios (Online Boutique)"]
-        OB[Pods: frontend, checkout, cart...] -->|OTLP gRPC/HTTP| OTEL[OpenTelemetry Collector]
-        OB -->|Stdout/Stderr| ALLOY[Grafana Alloy DaemonSet]
+        OB[Pods: frontend, checkout, cart...] -->|OTLP gRPC/HTTP 4317/4318| OTEL[OpenTelemetry Collector]
+        OB -->|Stdout/Stderr /var/log/pods| ALLOY[Grafana Alloy DaemonSet]
     end
 
     subgraph PLATFORM["Plataforma de Kubernetes"]
@@ -36,11 +36,11 @@ flowchart TD
     end
 
     subgraph INGESTION["Motores de Almacenamiento & Consulta"]
-        OTEL -->|Métricas| PROM[(Prometheus TSDB)]
+        OTEL -->|Spanmetrics & OTLP| PROM[(Prometheus TSDB)]
         OTEL -->|Trazas OTLP| TEMPO[(Grafana Tempo)]
-        ALLOY -->|Logs de Pods| LOKI[(Grafana Loki)]
-        NODE --> PROM
-        KSM --> PROM
+        ALLOY -->|Logs Estructurados| LOKI[(Grafana Loki)]
+        NODE -->|Métricas USE del Nodo| PROM
+        KSM -->|Métricas de Objetos K8s| PROM
     end
 
     subgraph VISUALIZATION["Visualización y Alertas"]
@@ -49,6 +49,7 @@ flowchart TD
         LOKI --> GRAF
         PROM --> AM[Alertmanager]
         AM --> DISCORD[Discord Webhook Alerting]
+        PROM --> ARGO[Argo Rollouts Canary Analysis]
     end
 ```
 
@@ -58,11 +59,11 @@ flowchart TD
 
 | Componente | Rol en la Plataforma | Configuración y Despliegue |
 |---|---|---|
-| **`kube-prometheus-stack`** | Prometheus Operator, Prometheus TSDB, Alertmanager, Node Exporter, Kube-State-Metrics y Grafana. | Helm chart `prometheus-community/kube-prometheus-stack` v92.1.1 gestionado vía Argo CD. |
-| **`Grafana`** | Tableros unificados con soporte de provisioning declarativo para dashboards (métodos RED y USE) y datasources. | Integrado con **External Secrets Operator** para autenticación `admin` desde Azure Key Vault. |
+| **`kube-prometheus-stack`** | Prometheus Operator, Prometheus TSDB con Exemplars, Alertmanager, Node Exporter, Kube-State-Metrics y Grafana. | Helm chart `prometheus-community/kube-prometheus-stack` v92.1.1 gestionado vía Argo CD. |
+| **`Grafana`** | Tableros unificados con provisioning declarativo para dashboards (métodos RED y USE) y datasources enlazados. | Integrado con **External Secrets Operator** para autenticación `admin` desde Azure Key Vault. |
 | **`Loki` & `Alloy`** | Ingesta y consulta de logs estructurados con retención eficiente sin indexación pesada de texto completo. | Single-binary / filesystem en dev con Grafana Alloy DaemonSet (P4-02). |
 | **`Tempo` & `OTel Collector`** | Almacenamiento de trazas distribuidas e ingesta unificada de instrumentación OTLP (gRPC/HTTP). | Tempo Single-binary y OTel Collector Gateway con spans correlacionados (P4-03). |
-| **`Alertmanager` & `PrometheusRule`** | Reglas de alerta SRE (síntomas vs. causas) con `runbook_url` y enrutamiento a Discord. | `PrometheusRule` y `AlertmanagerConfig` integrados con External Secrets (P4-05). |
+| **`Alertmanager` & `PrometheusRule`** | Reglas de alerta SRE (síntomas vs. causas) con `runbook_url` y enrutamiento nativo a Discord. | `PrometheusRule` y `AlertmanagerConfig` integrados con External Secrets (P4-05). |
 
 ---
 
@@ -86,7 +87,26 @@ Siguiendo el estándar de seguridad establecido en **P3-05**, las credenciales d
 
 ---
 
-## 🔗 6. Recorrido de Correlación: Alerta ➔ Dashboard ➔ Traza ➔ Logs
+## 🖼️ 6. Galería de Evidencias y Dashboards como Código
+
+### 6.1. Dashboard RED por Servicio (`dashboards/services-red.json`)
+Monitorea los signos vitales de los microservicios bajo el método **RED** (Rate, Errors, Duration) con selector de variables dinámico por microservicio y vinculación de **Exemplars** a Grafana Tempo.
+
+![Dashboard RED — Services Overview](docs/assets/dashboard-services-red.png)
+
+### 6.2. Dashboard USE por Nodo (`dashboards/nodes-use.json`)
+Supervisa la salud de la infraestructura de cómputo del clúster bajo el método **USE** (Utilization, Saturation, Errors) para CPU, memoria RAM, disco raíz y reinicios de contenedores.
+
+![Dashboard USE — Nodes Overview](docs/assets/dashboard-nodes-use.png)
+
+### 6.3. Alertas Accionables en Discord con Runbooks SRE
+Notificación enviada por Alertmanager ante degradación de latencia ($p95 \gt 200\text{ms}$), incorporando enlaces directos al dashboard del servicio y al runbook de mitigación.
+
+![Alerta en Discord](docs/assets/discord-alert-notification.png)
+
+---
+
+## 🔗 7. Recorrido de Correlación: Alerta ➔ Dashboard ➔ Traza ➔ Logs (P4-06)
 
 ![Recorrido de Correlación SRE](docs/assets/correlation-walkthrough.gif)
 
@@ -97,7 +117,27 @@ Siguiendo el estándar de seguridad establecido en **P3-05**, las credenciales d
 
 ---
 
-## 🛠️ 7. Validación Local y Automatización
+## ⚡ 8. Consumo de Recursos del Stack (FinOps & Dimensionamiento)
+
+El stack de observabilidad fue dimensionado minuciosamente para operar dentro de un clúster de desarrollo/pruebas (`dev-k8s`) manteniendo **cero sobrecostos** y máxima estabilidad:
+
+| Componente | CPU Requests | CPU Limits | Memory Requests | Memory Limits | Estrategia de Almacenamiento |
+|---|---|---|---|---|---|
+| **Prometheus TSDB** | `100m` | `500m` | `256Mi` | `512Mi` | `emptyDir` (24h retención / 5GiB) |
+| **Prometheus Operator** | `50m` | `200m` | `128Mi` | `256Mi` | Stateless |
+| **Alertmanager** | `25m` | `100m` | `64Mi` | `128Mi` | `emptyDir` (24h retención) |
+| **Grafana** | `50m` | `250m` | `128Mi` | `256Mi` | Stateless (Dashboards/Datasources as Code) |
+| **Node Exporter (por nodo)** | `20m` | `100m` | `32Mi` | `64Mi` | Host access |
+| **Kube-State-Metrics** | `20m` | `100m` | `64Mi` | `128Mi` | Stateless |
+| **Grafana Loki** | `50m` | `200m` | `128Mi` | `256Mi` | Filesystem efímero en dev (retención 24h) |
+| **Grafana Alloy (DaemonSet)** | `25m` | `100m` | `64Mi` | `128Mi` | Ingesta de `/var/log/pods` |
+| **Grafana Tempo** | `50m` | `200m` | `128Mi` | `256Mi` | Filesystem en bloque en dev (retención 24h) |
+| **OpenTelemetry Collector** | `50m` | `200m` | `64Mi` | `256Mi` | Ingesta en memoria con batching |
+| **TOTAL CONSOLIDADO** | **`440m` (~0.44 núcleos)** | **`2150m`** | **`1056Mi` (~1.03 GiB)** | **`2368Mi` (~2.3 GiB)** | **Cero costos de nube adicionales ($0.00)** |
+
+---
+
+## 🛠️ 9. Validación Local y Automatización
 
 El repositorio incluye un `Makefile` para validar los templates y esquemas OpenAPI offline:
 
