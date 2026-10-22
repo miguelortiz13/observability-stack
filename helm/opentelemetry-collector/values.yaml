@@ -65,15 +65,24 @@ config:
     prometheus:
       endpoint: "0.0.0.0:8889"
       namespace: "otel"
+      enable_open_metrics: true
+
+  connectors:
+    spanmetrics:
+      histogram:
+        explicit:
+          buckets: [5ms, 10ms, 25ms, 50ms, 100ms, 250ms, 500ms, 1s, 2.5s]
+      exemplars:
+        enabled: true
 
   service:
     pipelines:
       traces:
         receivers: [otlp]
         processors: [memory_limiter, batch]
-        exporters: [otlp/tempo, debug]
+        exporters: [otlp/tempo, spanmetrics, debug]
       metrics:
-        receivers: [otlp]
+        receivers: [otlp, spanmetrics]
         processors: [memory_limiter, batch]
         exporters: [prometheus, debug]
 
