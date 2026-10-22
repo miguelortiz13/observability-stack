@@ -82,11 +82,22 @@ Siguiendo el estándar de seguridad establecido en **P3-05**, las credenciales d
 * 📄 [**`docs/tracing.md` — Guía de Trazabilidad Distribuida: OpenTelemetry, Tempo & TraceQL**](docs/tracing.md)
 * 📄 [**`docs/dashboards.md` — Dashboards como Código: Métodos RED y USE en Grafana**](docs/dashboards.md)
 * 📄 [**`docs/alerting-runbooks.md` — Alertas Accionables a Discord y Catálogo de Runbooks SRE**](docs/alerting-runbooks.md)
+* 📄 [**`docs/correlation.md` — Correlación Tridimensional SRE: Métricas ➔ Trazas ➔ Logs**](docs/correlation.md)
 
 ---
 
+## 🔗 6. Recorrido de Correlación: Alerta ➔ Dashboard ➔ Traza ➔ Logs
 
-## 🛠️ 6. Validación Local y Automatización
+![Recorrido de Correlación SRE](docs/assets/correlation-walkthrough.gif)
+
+1. **Alerta en Discord (`#alerts`):** Alertmanager notifica el síntoma (`HighP95Latency` / `ErrorBudgetFastBurn`) con enlaces directos al **Dashboard RED** y al **Runbook SRE**.
+2. **Métricas ➔ Trazas (Exemplars en Prometheus):** En el panel **Duration — Latencia HTTP** del dashboard RED, los diamantes de **Exemplars (`♦`)** contienen el `trace_id` capturado por OpenTelemetry y `spanmetrics`, abriendo con un clic la traza en **Grafana Tempo**.
+3. **Trazas ➔ Logs (`tracesToLogsV2` en Tempo):** Desde el span con error o alta latencia en el waterfall de Tempo, el enlace **"Logs for this span"** abre **Grafana Loki** filtrado por `namespace`, `service_name` y `trace_id`.
+4. **Logs ➔ Trazas (`derivedFields` en Loki):** Cada línea de log JSON o logfmt que incluye `trace_id` expone automáticamente el botón **"Ver traza en Tempo"**.
+
+---
+
+## 🛠️ 7. Validación Local y Automatización
 
 El repositorio incluye un `Makefile` para validar los templates y esquemas OpenAPI offline:
 

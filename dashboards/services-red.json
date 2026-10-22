@@ -15,7 +15,32 @@
   "fiscalYearStartMonth": 0,
   "graphTooltip": 1,
   "id": null,
-  "links": [],
+  "links": [
+    {
+      "asDropdown": false,
+      "icon": "external link",
+      "includeVars": true,
+      "keepTime": true,
+      "tags": [],
+      "targetBlank": true,
+      "title": "🔍 Explorar Trazas en Tempo",
+      "tooltip": "Abrir Grafana Explore en Tempo para el rango de tiempo seleccionado",
+      "type": "link",
+      "url": "/explore?left=%7B%22datasource%22:%22tempo%22,%22queries%22:%5B%7B%22refId%22:%22A%22,%22queryType%22:%22traceql%22,%22query%22:%22%7B%20resource.service.name%20%3D~%20%5C%22$service%5C%22%20%7D%22%7D%5D%7D"
+    },
+    {
+      "asDropdown": false,
+      "icon": "doc",
+      "includeVars": true,
+      "keepTime": true,
+      "tags": [],
+      "targetBlank": true,
+      "title": "📜 Explorar Logs en Loki",
+      "tooltip": "Abrir Grafana Explore en Loki filtrando por el servicio actual",
+      "type": "link",
+      "url": "/explore?left=%7B%22datasource%22:%22loki%22,%22queries%22:%5B%7B%22refId%22:%22A%22,%22expr%22:%22%7Bnamespace%3D%5C%22$namespace%5C%22,%20container%3D~%5C%22$service%5C%22%7D%22%7D%5D%7D"
+    }
+  ],
   "liveNow": false,
   "panels": [
     {
@@ -271,6 +296,18 @@
             "lineWidth": 2,
             "showPoints": "never"
           },
+          "links": [
+            {
+              "targetBlank": true,
+              "title": "Ver Trazas Lentas en Tempo (${__field.labels.service})",
+              "url": "/explore?left=%7B%22datasource%22:%22tempo%22,%22queries%22:%5B%7B%22refId%22:%22A%22,%22queryType%22:%22traceql%22,%22query%22:%22%7B%20duration%20%3E%20100ms%20%7D%22%7D%5D%7D"
+            },
+            {
+              "targetBlank": true,
+              "title": "Ver Logs del Servicio en Loki",
+              "url": "/explore?left=%7B%22datasource%22:%22loki%22,%22queries%22:%5B%7B%22refId%22:%22A%22,%22expr%22:%22%7Bnamespace%3D%5C%22$namespace%5C%22,%20container%3D~%5C%22$service%5C%22%7D%22%7D%5D%7D"
+            }
+          ],
           "unit": "s"
         },
         "overrides": []
@@ -286,6 +323,7 @@
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
           "editorMode": "code",
+          "exemplar": true,
           "expr": "histogram_quantile(0.50, sum(rate(http_request_duration_seconds_bucket{job=~\"$service.*\"}[$interval])) by (le))",
           "legendFormat": "p50 (Mediana)",
           "range": true,
@@ -294,6 +332,7 @@
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
           "editorMode": "code",
+          "exemplar": true,
           "expr": "histogram_quantile(0.90, sum(rate(http_request_duration_seconds_bucket{job=~\"$service.*\"}[$interval])) by (le))",
           "legendFormat": "p90",
           "range": true,
@@ -302,6 +341,7 @@
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
           "editorMode": "code",
+          "exemplar": true,
           "expr": "histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket{job=~\"$service.*\"}[$interval])) by (le))",
           "legendFormat": "p95",
           "range": true,
@@ -310,13 +350,23 @@
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
           "editorMode": "code",
+          "exemplar": true,
           "expr": "histogram_quantile(0.99, sum(rate(http_request_duration_seconds_bucket{job=~\"$service.*\"}[$interval])) by (le))",
           "legendFormat": "p99",
           "range": true,
           "refId": "D"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "${datasource}" },
+          "editorMode": "code",
+          "exemplar": true,
+          "expr": "histogram_quantile(0.95, sum(rate(otel_traces_spanmetrics_duration_milliseconds_bucket{service_name=~\"$service.*\"}[$interval])) by (le)) / 1000",
+          "legendFormat": "OTel SpanMetrics p95 (Exemplars)",
+          "range": true,
+          "refId": "E"
         }
       ],
-      "title": "Distribución de Latencias (p50, p90, p95, p99)",
+      "title": "Distribución de Latencias (p50, p90, p95, p99) + Exemplars",
       "type": "timeseries"
     },
     {
