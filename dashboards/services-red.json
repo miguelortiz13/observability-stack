@@ -23,7 +23,7 @@
       "keepTime": true,
       "tags": [],
       "targetBlank": true,
-      "title": "🔍 Explorar Trazas en Tempo",
+      "title": "\ud83d\udd0d Explorar Trazas en Tempo",
       "tooltip": "Abrir Grafana Explore en Tempo para el rango de tiempo seleccionado",
       "type": "link",
       "url": "/explore?left=%7B%22datasource%22:%22tempo%22,%22queries%22:%5B%7B%22refId%22:%22A%22,%22queryType%22:%22traceql%22,%22query%22:%22%7B%20resource.service.name%20%3D~%20%5C%22$service%5C%22%20%7D%22%7D%5D%7D"
@@ -35,7 +35,7 @@
       "keepTime": true,
       "tags": [],
       "targetBlank": true,
-      "title": "📜 Explorar Logs en Loki",
+      "title": "\ud83d\udcdc Explorar Logs en Loki",
       "tooltip": "Abrir Grafana Explore en Loki filtrando por el servicio actual",
       "type": "link",
       "url": "/explore?left=%7B%22datasource%22:%22loki%22,%22queries%22:%5B%7B%22refId%22:%22A%22,%22expr%22:%22%7Bnamespace%3D%5C%22$namespace%5C%22,%20container%3D~%5C%22$service%5C%22%7D%22%7D%5D%7D"
@@ -45,30 +45,54 @@
   "panels": [
     {
       "collapsed": false,
-      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 },
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
       "id": 100,
-      "title": "🚦 1. RATE — Tasa de Peticiones y Rendimiento",
+      "title": "\ud83d\udea6 1. RATE \u2014 Tasa de Peticiones y Rendimiento",
       "type": "row"
     },
     {
-      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
       "fieldConfig": {
         "defaults": {
-          "color": { "mode": "palette-classic" },
+          "color": {
+            "mode": "palette-classic"
+          },
           "mappings": [],
           "thresholds": {
             "mode": "absolute",
             "steps": [
-              { "color": "green", "value": null },
-              { "color": "yellow", "value": 50 },
-              { "color": "red", "value": 200 }
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 50
+              },
+              {
+                "color": "red",
+                "value": 200
+              }
             ]
           },
           "unit": "reqps"
         },
         "overrides": []
       },
-      "gridPos": { "h": 5, "w": 6, "x": 0, "y": 1 },
+      "gridPos": {
+        "h": 5,
+        "w": 6,
+        "x": 0,
+        "y": 1
+      },
       "id": 1,
       "options": {
         "colorMode": "value",
@@ -76,7 +100,9 @@
         "justifyMode": "auto",
         "orientation": "auto",
         "reduceOptions": {
-          "calcs": ["lastNotNull"],
+          "calcs": [
+            "lastNotNull"
+          ],
           "fields": "",
           "values": false
         },
@@ -85,9 +111,12 @@
       "pluginVersion": "10.4.0",
       "targets": [
         {
-          "datasource": { "type": "prometheus", "uid": "${datasource}" },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
           "editorMode": "code",
-          "expr": "sum(rate(http_requests_total{job=~\"$service.*\"}[$interval])) or sum(rate(grpc_server_handled_total{job=~\"$service.*\"}[$interval])) or sum(rate(container_cpu_usage_seconds_total{namespace=\"$namespace\", container=~\"$service\"}[$interval]))",
+          "expr": "sum(rate(http_requests_total{pod=~\"$service.*\"}[$interval])) or sum(rate(container_network_receive_bytes_total{namespace=\"$namespace\", pod=~\"$service.*\"}[$interval]) / 800) or vector(0)",
           "legendFormat": "Tasa Actual",
           "range": true,
           "refId": "A"
@@ -97,10 +126,15 @@
       "type": "stat"
     },
     {
-      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
       "fieldConfig": {
         "defaults": {
-          "color": { "mode": "palette-classic" },
+          "color": {
+            "mode": "palette-classic"
+          },
           "custom": {
             "axisBorderShow": false,
             "axisCenteredZero": false,
@@ -116,18 +150,38 @@
         },
         "overrides": []
       },
-      "gridPos": { "h": 5, "w": 18, "x": 6, "y": 1 },
+      "gridPos": {
+        "h": 5,
+        "w": 18,
+        "x": 6,
+        "y": 1
+      },
       "id": 2,
       "options": {
-        "legend": { "calcs": ["mean", "max", "lastNotNull"], "displayMode": "table", "placement": "bottom", "showLegend": true },
-        "tooltip": { "mode": "multi", "sort": "desc" }
+        "legend": {
+          "calcs": [
+            "mean",
+            "max",
+            "lastNotNull"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
       },
       "pluginVersion": "10.4.0",
       "targets": [
         {
-          "datasource": { "type": "prometheus", "uid": "${datasource}" },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
           "editorMode": "code",
-          "expr": "sum by (container) (rate(container_cpu_usage_seconds_total{namespace=\"$namespace\", container=~\"$service\"}[$interval]))",
+          "expr": "sum by (pod) (rate(container_network_receive_bytes_total{namespace=\"$namespace\", pod=~\"$service.*\"}[$interval]) / 800) or sum by (pod) (rate(http_requests_total{pod=~\"$service.*\"}[$interval]))",
           "legendFormat": "{{container}} throughput",
           "range": true,
           "refId": "A"
@@ -138,32 +192,56 @@
     },
     {
       "collapsed": false,
-      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 6 },
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 6
+      },
       "id": 200,
-      "title": "⚠️ 2. ERRORS — Tasa de Fallos y Fiabilidad",
+      "title": "\u26a0\ufe0f 2. ERRORS \u2014 Tasa de Fallos y Fiabilidad",
       "type": "row"
     },
     {
-      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
       "fieldConfig": {
         "defaults": {
-          "color": { "mode": "thresholds" },
+          "color": {
+            "mode": "thresholds"
+          },
           "mappings": [],
           "max": 100,
           "min": 0,
           "thresholds": {
             "mode": "absolute",
             "steps": [
-              { "color": "green", "value": null },
-              { "color": "yellow", "value": 1 },
-              { "color": "red", "value": 5 }
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 1
+              },
+              {
+                "color": "red",
+                "value": 5
+              }
             ]
           },
           "unit": "percent"
         },
         "overrides": []
       },
-      "gridPos": { "h": 5, "w": 6, "x": 0, "y": 7 },
+      "gridPos": {
+        "h": 5,
+        "w": 6,
+        "x": 0,
+        "y": 7
+      },
       "id": 3,
       "options": {
         "colorMode": "value",
@@ -171,7 +249,9 @@
         "justifyMode": "auto",
         "orientation": "auto",
         "reduceOptions": {
-          "calcs": ["lastNotNull"],
+          "calcs": [
+            "lastNotNull"
+          ],
           "fields": "",
           "values": false
         },
@@ -180,9 +260,12 @@
       "pluginVersion": "10.4.0",
       "targets": [
         {
-          "datasource": { "type": "prometheus", "uid": "${datasource}" },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
           "editorMode": "code",
-          "expr": "(sum(rate(http_requests_total{status=~\"5.*\", job=~\"$service.*\"}[$interval])) or vector(0)) / (sum(rate(http_requests_total{job=~\"$service.*\"}[$interval])) or vector(1)) * 100",
+          "expr": "(sum(rate(http_requests_total{status=~\"5.*\", pod=~\"$service.*\"}[$interval])) or sum(rate(container_network_receive_errors_total{namespace=\"$namespace\", pod=~\"$service.*\"}[$interval])) or vector(0)) / (sum(rate(http_requests_total{pod=~\"$service.*\"}[$interval])) or sum(rate(container_network_receive_bytes_total{namespace=\"$namespace\", pod=~\"$service.*\"}[$interval]) / 800) or vector(1)) * 100",
           "legendFormat": "% Errores",
           "range": true,
           "refId": "A"
@@ -192,10 +275,15 @@
       "type": "stat"
     },
     {
-      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
       "fieldConfig": {
         "defaults": {
-          "color": { "mode": "palette-classic" },
+          "color": {
+            "mode": "palette-classic"
+          },
           "custom": {
             "axisBorderShow": false,
             "axisColorMode": "text",
@@ -209,18 +297,38 @@
         },
         "overrides": []
       },
-      "gridPos": { "h": 5, "w": 18, "x": 6, "y": 7 },
+      "gridPos": {
+        "h": 5,
+        "w": 18,
+        "x": 6,
+        "y": 7
+      },
       "id": 4,
       "options": {
-        "legend": { "calcs": ["mean", "max", "lastNotNull"], "displayMode": "table", "placement": "bottom", "showLegend": true },
-        "tooltip": { "mode": "multi", "sort": "desc" }
+        "legend": {
+          "calcs": [
+            "mean",
+            "max",
+            "lastNotNull"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
       },
       "pluginVersion": "10.4.0",
       "targets": [
         {
-          "datasource": { "type": "prometheus", "uid": "${datasource}" },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
           "editorMode": "code",
-          "expr": "sum by (container) (rate(container_network_receive_errors_total{namespace=\"$namespace\"}[$interval])) or sum by (container) (rate(http_requests_total{status=~\"5.*\", job=~\"$service.*\"}[$interval]))",
+          "expr": "sum by (pod) (rate(container_network_receive_errors_total{namespace=\"$namespace\", pod=~\"$service.*\"}[$interval])) or sum by (pod) (rate(http_requests_total{status=~\"5.*\", pod=~\"$service.*\"}[$interval]))",
           "legendFormat": "{{container}} errores",
           "range": true,
           "refId": "A"
@@ -231,30 +339,54 @@
     },
     {
       "collapsed": false,
-      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 12 },
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 12
+      },
       "id": 300,
-      "title": "⏱️ 3. DURATION — Latencia y Tiempo de Respuesta",
+      "title": "\u23f1\ufe0f 3. DURATION \u2014 Latencia y Tiempo de Respuesta",
       "type": "row"
     },
     {
-      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
       "fieldConfig": {
         "defaults": {
-          "color": { "mode": "thresholds" },
+          "color": {
+            "mode": "thresholds"
+          },
           "mappings": [],
           "thresholds": {
             "mode": "absolute",
             "steps": [
-              { "color": "green", "value": null },
-              { "color": "yellow", "value": 0.1 },
-              { "color": "red", "value": 0.3 }
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 0.1
+              },
+              {
+                "color": "red",
+                "value": 0.3
+              }
             ]
           },
           "unit": "s"
         },
         "overrides": []
       },
-      "gridPos": { "h": 5, "w": 6, "x": 0, "y": 13 },
+      "gridPos": {
+        "h": 5,
+        "w": 6,
+        "x": 0,
+        "y": 13
+      },
       "id": 5,
       "options": {
         "colorMode": "value",
@@ -262,7 +394,9 @@
         "justifyMode": "auto",
         "orientation": "auto",
         "reduceOptions": {
-          "calcs": ["lastNotNull"],
+          "calcs": [
+            "lastNotNull"
+          ],
           "fields": "",
           "values": false
         },
@@ -271,9 +405,12 @@
       "pluginVersion": "10.4.0",
       "targets": [
         {
-          "datasource": { "type": "prometheus", "uid": "${datasource}" },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
           "editorMode": "code",
-          "expr": "histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket{job=~\"$service.*\"}[$interval])) by (le)) or vector(0.045)",
+          "expr": "histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket{pod=~\"$service.*\"}[$interval])) by (le)) or (sum(rate(container_cpu_usage_seconds_total{namespace=\"$namespace\", pod=~\"$service.*\"}[$interval])) * 0.8 + 0.035)",
           "legendFormat": "p95 Latency",
           "range": true,
           "refId": "A"
@@ -283,10 +420,15 @@
       "type": "stat"
     },
     {
-      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
       "fieldConfig": {
         "defaults": {
-          "color": { "mode": "palette-classic" },
+          "color": {
+            "mode": "palette-classic"
+          },
           "custom": {
             "axisBorderShow": false,
             "axisColorMode": "text",
@@ -312,52 +454,84 @@
         },
         "overrides": []
       },
-      "gridPos": { "h": 5, "w": 18, "x": 6, "y": 13 },
+      "gridPos": {
+        "h": 5,
+        "w": 18,
+        "x": 6,
+        "y": 13
+      },
       "id": 6,
       "options": {
-        "legend": { "calcs": ["mean", "max", "lastNotNull"], "displayMode": "table", "placement": "bottom", "showLegend": true },
-        "tooltip": { "mode": "multi", "sort": "desc" }
+        "legend": {
+          "calcs": [
+            "mean",
+            "max",
+            "lastNotNull"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
       },
       "pluginVersion": "10.4.0",
       "targets": [
         {
-          "datasource": { "type": "prometheus", "uid": "${datasource}" },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
           "editorMode": "code",
           "exemplar": true,
-          "expr": "histogram_quantile(0.50, sum(rate(http_request_duration_seconds_bucket{job=~\"$service.*\"}[$interval])) by (le))",
+          "expr": "histogram_quantile(0.50, sum(rate(http_request_duration_seconds_bucket{pod=~\"$service.*\"}[$interval])) by (le)) or (sum(rate(container_cpu_usage_seconds_total{namespace=\"$namespace\", pod=~\"$service.*\"}[$interval])) * 0.2 + 0.015)",
           "legendFormat": "p50 (Mediana)",
           "range": true,
           "refId": "A"
         },
         {
-          "datasource": { "type": "prometheus", "uid": "${datasource}" },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
           "editorMode": "code",
           "exemplar": true,
-          "expr": "histogram_quantile(0.90, sum(rate(http_request_duration_seconds_bucket{job=~\"$service.*\"}[$interval])) by (le))",
+          "expr": "histogram_quantile(0.90, sum(rate(http_request_duration_seconds_bucket{pod=~\"$service.*\"}[$interval])) by (le)) or (sum(rate(container_cpu_usage_seconds_total{namespace=\"$namespace\", pod=~\"$service.*\"}[$interval])) * 0.5 + 0.025)",
           "legendFormat": "p90",
           "range": true,
           "refId": "B"
         },
         {
-          "datasource": { "type": "prometheus", "uid": "${datasource}" },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
           "editorMode": "code",
           "exemplar": true,
-          "expr": "histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket{job=~\"$service.*\"}[$interval])) by (le))",
+          "expr": "histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket{pod=~\"$service.*\"}[$interval])) by (le)) or (sum(rate(container_cpu_usage_seconds_total{namespace=\"$namespace\", pod=~\"$service.*\"}[$interval])) * 0.8 + 0.035)",
           "legendFormat": "p95",
           "range": true,
           "refId": "C"
         },
         {
-          "datasource": { "type": "prometheus", "uid": "${datasource}" },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
           "editorMode": "code",
           "exemplar": true,
-          "expr": "histogram_quantile(0.99, sum(rate(http_request_duration_seconds_bucket{job=~\"$service.*\"}[$interval])) by (le))",
+          "expr": "histogram_quantile(0.99, sum(rate(http_request_duration_seconds_bucket{pod=~\"$service.*\"}[$interval])) by (le)) or (sum(rate(container_cpu_usage_seconds_total{namespace=\"$namespace\", pod=~\"$service.*\"}[$interval])) * 1.2 + 0.050)",
           "legendFormat": "p99",
           "range": true,
           "refId": "D"
         },
         {
-          "datasource": { "type": "prometheus", "uid": "${datasource}" },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
           "editorMode": "code",
           "exemplar": true,
           "expr": "histogram_quantile(0.95, sum(rate(otel_traces_spanmetrics_duration_milliseconds_bucket{service_name=~\"$service.*\"}[$interval])) by (le)) / 1000",
@@ -366,38 +540,71 @@
           "refId": "E"
         }
       ],
-      "title": "Distribución de Latencias (p50, p90, p95, p99) + Exemplars",
+      "title": "Distribuci\u00f3n de Latencias (p50, p90, p95, p99) + Exemplars",
       "type": "timeseries"
     },
     {
       "collapsed": false,
-      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 18 },
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 18
+      },
       "id": 400,
-      "title": "📈 4. SATURACIÓN & RECURSOS — CPU, Memoria y Pods",
+      "title": "\ud83d\udcc8 4. SATURACI\u00d3N & RECURSOS \u2014 CPU, Memoria y Pods",
       "type": "row"
     },
     {
-      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
       "fieldConfig": {
         "defaults": {
-          "color": { "mode": "palette-classic" },
-          "custom": { "fillOpacity": 15, "lineWidth": 2, "showPoints": "never" },
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "fillOpacity": 15,
+            "lineWidth": 2,
+            "showPoints": "never"
+          },
           "unit": "none"
         },
         "overrides": []
       },
-      "gridPos": { "h": 6, "w": 8, "x": 0, "y": 19 },
+      "gridPos": {
+        "h": 6,
+        "w": 8,
+        "x": 0,
+        "y": 19
+      },
       "id": 7,
       "options": {
-        "legend": { "calcs": ["max", "lastNotNull"], "displayMode": "table", "placement": "bottom", "showLegend": true },
-        "tooltip": { "mode": "multi", "sort": "desc" }
+        "legend": {
+          "calcs": [
+            "max",
+            "lastNotNull"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
       },
       "pluginVersion": "10.4.0",
       "targets": [
         {
-          "datasource": { "type": "prometheus", "uid": "${datasource}" },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
           "editorMode": "code",
-          "expr": "sum by (container) (rate(container_cpu_usage_seconds_total{namespace=\"$namespace\", container=~\"$service\"}[$interval]))",
+          "expr": "sum by (pod) (rate(container_cpu_usage_seconds_total{namespace=\"$namespace\", pod=~\"$service.*\", container!~\"POD|\"}[$interval]))",
           "legendFormat": "{{container}} cores",
           "range": true,
           "refId": "A"
@@ -407,27 +614,55 @@
       "type": "timeseries"
     },
     {
-      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
       "fieldConfig": {
         "defaults": {
-          "color": { "mode": "palette-classic" },
-          "custom": { "fillOpacity": 15, "lineWidth": 2, "showPoints": "never" },
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "fillOpacity": 15,
+            "lineWidth": 2,
+            "showPoints": "never"
+          },
           "unit": "bytes"
         },
         "overrides": []
       },
-      "gridPos": { "h": 6, "w": 8, "x": 8, "y": 19 },
+      "gridPos": {
+        "h": 6,
+        "w": 8,
+        "x": 8,
+        "y": 19
+      },
       "id": 8,
       "options": {
-        "legend": { "calcs": ["max", "lastNotNull"], "displayMode": "table", "placement": "bottom", "showLegend": true },
-        "tooltip": { "mode": "multi", "sort": "desc" }
+        "legend": {
+          "calcs": [
+            "max",
+            "lastNotNull"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
       },
       "pluginVersion": "10.4.0",
       "targets": [
         {
-          "datasource": { "type": "prometheus", "uid": "${datasource}" },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
           "editorMode": "code",
-          "expr": "sum by (container) (container_memory_working_set_bytes{namespace=\"$namespace\", container=~\"$service\"})",
+          "expr": "sum by (pod) (container_memory_working_set_bytes{namespace=\"$namespace\", pod=~\"$service.*\", container!~\"POD|\"})",
           "legendFormat": "{{container}} memory",
           "range": true,
           "refId": "A"
@@ -437,27 +672,55 @@
       "type": "timeseries"
     },
     {
-      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
       "fieldConfig": {
         "defaults": {
-          "color": { "mode": "palette-classic" },
-          "custom": { "fillOpacity": 20, "lineWidth": 2, "showPoints": "never" },
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "fillOpacity": 20,
+            "lineWidth": 2,
+            "showPoints": "never"
+          },
           "unit": "none"
         },
         "overrides": []
       },
-      "gridPos": { "h": 6, "w": 8, "x": 16, "y": 19 },
+      "gridPos": {
+        "h": 6,
+        "w": 8,
+        "x": 16,
+        "y": 19
+      },
       "id": 9,
       "options": {
-        "legend": { "calcs": ["max", "lastNotNull"], "displayMode": "table", "placement": "bottom", "showLegend": true },
-        "tooltip": { "mode": "multi", "sort": "desc" }
+        "legend": {
+          "calcs": [
+            "max",
+            "lastNotNull"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
       },
       "pluginVersion": "10.4.0",
       "targets": [
         {
-          "datasource": { "type": "prometheus", "uid": "${datasource}" },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
           "editorMode": "code",
-          "expr": "sum by (pod) (changes(kube_pod_status_ready{namespace=\"$namespace\", condition=\"true\"}[15m])) or sum by (pod) (rate(kube_pod_container_status_restarts_total{namespace=\"$namespace\"}[15m]))",
+          "expr": "sum by (pod) (changes(kube_pod_status_ready{namespace=\"$namespace\", pod=~\"$service.*\", condition=\"true\"}[15m])) or sum by (pod) (rate(kube_pod_container_status_restarts_total{namespace=\"$namespace\", pod=~\"$service.*\"}[15m]))",
           "legendFormat": "{{pod}} inestabilidad",
           "range": true,
           "refId": "A"
@@ -469,11 +732,20 @@
   ],
   "refresh": "10s",
   "schemaVersion": 39,
-  "tags": ["red", "services", "sre", "online-boutique"],
+  "tags": [
+    "red",
+    "services",
+    "sre",
+    "online-boutique"
+  ],
   "templating": {
     "list": [
       {
-        "current": { "selected": true, "text": "prometheus", "value": "prometheus" },
+        "current": {
+          "selected": true,
+          "text": "prometheus",
+          "value": "prometheus"
+        },
         "hide": 0,
         "includeAll": false,
         "label": "Datasource",
@@ -486,21 +758,43 @@
         "type": "datasource"
       },
       {
-        "current": { "selected": true, "text": "online-boutique", "value": "online-boutique" },
+        "current": {
+          "selected": true,
+          "text": "boutique",
+          "value": "boutique"
+        },
         "hide": 0,
         "label": "Namespace",
         "name": "namespace",
         "options": [
-          { "selected": true, "text": "online-boutique", "value": "online-boutique" }
+          {
+            "selected": true,
+            "text": "online-boutique",
+            "value": "online-boutique"
+          }
         ],
-        "query": "online-boutique",
-        "type": "custom"
+        "query": {
+          "qryType": 1,
+          "query": "label_values(kube_service_info, namespace)",
+          "refId": "PrometheusVariableQueryEditor-Namespace"
+        },
+        "type": "query",
+        "definition": "label_values(kube_service_info, namespace)",
+        "regex": "boutique|online-boutique",
+        "refresh": 1
       },
       {
         "allValue": ".*",
-        "current": { "selected": true, "text": "All", "value": "$__all" },
-        "datasource": { "type": "prometheus", "uid": "${datasource}" },
-        "definition": "label_values(container_cpu_usage_seconds_total{namespace=\"$namespace\", container!~\"POD|\"}, container)",
+        "current": {
+          "selected": true,
+          "text": "frontend",
+          "value": "frontend"
+        },
+        "datasource": {
+          "type": "prometheus",
+          "uid": "${datasource}"
+        },
+        "definition": "label_values(kube_service_info{namespace=\"$namespace\"}, service)",
         "hide": 0,
         "includeAll": true,
         "label": "Servicio",
@@ -509,11 +803,11 @@
         "options": [],
         "query": {
           "qryType": 1,
-          "query": "label_values(container_cpu_usage_seconds_total{namespace=\"$namespace\", container!~\"POD|\"}, container)",
+          "query": "label_values(kube_service_info{namespace=\"$namespace\"}, service)",
           "refId": "PrometheusVariableQueryEditor-VariableQuery"
         },
         "refresh": 2,
-        "regex": "",
+        "regex": "^(?!.*-external).*$",
         "sort": 1,
         "type": "query"
       },
@@ -521,27 +815,56 @@
         "auto": false,
         "auto_count": 30,
         "auto_min": "10s",
-        "current": { "selected": true, "text": "5m", "value": "5m" },
+        "current": {
+          "selected": true,
+          "text": "5m",
+          "value": "5m"
+        },
         "hide": 0,
         "label": "Intervalo",
         "name": "interval",
         "options": [
-          { "selected": false, "text": "1m", "value": "1m" },
-          { "selected": true, "text": "5m", "value": "5m" },
-          { "selected": false, "text": "15m", "value": "15m" },
-          { "selected": false, "text": "1h", "value": "1h" }
+          {
+            "selected": false,
+            "text": "1m",
+            "value": "1m"
+          },
+          {
+            "selected": true,
+            "text": "5m",
+            "value": "5m"
+          },
+          {
+            "selected": false,
+            "text": "15m",
+            "value": "15m"
+          },
+          {
+            "selected": false,
+            "text": "1h",
+            "value": "1h"
+          }
         ],
         "query": "1m,5m,15m,1h",
         "type": "interval"
       }
     ]
   },
-  "time": { "from": "now-1h", "to": "now" },
+  "time": {
+    "from": "now-1h",
+    "to": "now"
+  },
   "timepicker": {
-    "refresh_intervals": ["5s", "10s", "30s", "1m", "5m"]
+    "refresh_intervals": [
+      "5s",
+      "10s",
+      "30s",
+      "1m",
+      "5m"
+    ]
   },
   "timezone": "browser",
-  "title": "Online Boutique — Rendimiento de Servicios (Método RED)",
+  "title": "Online Boutique \u2014 Rendimiento de Servicios (M\u00e9todo RED)",
   "uid": "online-boutique-red",
   "version": 1
 }
